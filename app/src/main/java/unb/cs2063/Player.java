@@ -6,8 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.util.Log;
 
-//this class represents a bitmap image on the screen.
-public class CharacterSprite {
+//this class represents a bitmap image used for the player of the game
+public class Player {
     // Reduce the number of times using getters and setters, just make class variables public and
     // directly access them to improve performance
     private Bitmap image;
@@ -19,9 +19,9 @@ public class CharacterSprite {
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
-    private final static String TAG = "CharacterSprite";
+    private final static String TAG = "Player";
 
-    public CharacterSprite(Bitmap bmp) {
+    public Player(Bitmap bmp) {
         image = bmp;
         //x = 100;
         //y = 100;
