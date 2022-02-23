@@ -12,10 +12,12 @@ public class Player {
     // directly access them to improve performance
     private Bitmap image;
     private int x, y;
-    private int rotation;
+    private int angle;
 
-    private int xVelocity = 10;
-    private int yVelocity = 5;
+    private int defaultVelocity = 5;
+    private double acceleration = 0;
+    private int xVelocity = defaultVelocity;
+    private int yVelocity = defaultVelocity;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
@@ -23,50 +25,73 @@ public class Player {
 
     public Player(Bitmap bmp) {
         image = bmp;
-        //x = 100;
-        //y = 100;
 
         x = (screenWidth/2) - (image.getWidth()/2);
         y = (screenHeight/2) - (image.getHeight()/2);
-        rotation = 0;
+        angle = 0;
     }
 
     public void draw(Canvas canvas) {
         //rotating the bitmap by rotating the canvas
         canvas.save();
         //Rotate around the center of the bitmap
-        canvas.rotate(rotation, x + (image.getWidth()/2), y + (image.getHeight()/2));
+        canvas.rotate(angle, x + (image.getWidth()/2), y + (image.getHeight()/2));
         canvas.drawBitmap(image, x, y, null);
         canvas.restore();
     }
 
     public void update() {
-        //Log.i(TAG, "In update()");
-    }
-
-    public void rotateTranslate(){
-        if(x < 0 && y < 0){
-            x = screenWidth / 2;
-            y = screenHeight / 2;
+        if((x > screenWidth - image.getWidth()) || (x < 0)){
+            //if the player has reached a X bound can still move on y axis
+            y += yVelocity;
+            //if player is at the right of the screen (highest x value)
+            if((xVelocity < -1) && (x > screenWidth - image.getWidth())){
+                y += yVelocity;
+                x += xVelocity;
+            }
+            //if player is at the left of screen (lowest x value)
+            else if((xVelocity > 1) && (x < 0)){
+                y += yVelocity;
+                x += xVelocity;
+            }
+        }
+        else if((y > screenHeight - image.getHeight()) || (y < 0)){
+            //if the player has reached a Y bound can still move on the x axis
+            x += xVelocity;
+            //if player is at the bottom of the screen (highest Y value)
+            if((yVelocity < -1) && y > (screenHeight - image.getHeight())){
+                y += yVelocity;
+                x += xVelocity;
+            }
+            //if player is at the top of the screen (lowest Y value)
+            else if((yVelocity > 1) && (y < 0)){
+                y += yVelocity;
+                x += xVelocity;
+            }
+        }
+        else if(((x > screenWidth - image.getWidth()) || (x < 0)) && ((y > screenHeight - image.getHeight()) || (y < 0))){
+            return;
         }
         else{
             x += xVelocity;
             y += yVelocity;
-            if((x > screenWidth - image.getWidth()) || (x < 0)){
-                xVelocity = xVelocity*-1;
-            }
-            if((y > screenHeight - image.getHeight()) || (y < 0)){
-                yVelocity = yVelocity*-1;
-            }
         }
 
-        // logic to adjust the rotation
-        if(rotation < 360){
-            rotation++;
+    }
+
+    public void move(double accelX){
+        updateVelocity();
+        //chose 7 as that is when the phone is at ~70 degrees
+        acceleration = -(accelX - 7);
+        if(acceleration > 0){
+            xVelocity *= acceleration;
+            yVelocity += acceleration;
         }
-        else{
-            rotation = 0;
+        if(acceleration <= 0){
+            xVelocity = 0;
+            yVelocity = 0;
         }
+        update();
     }
 
     public int getX(){
@@ -118,7 +143,16 @@ public class Player {
         return false;
     }
 
-    public void setRotation(int rotation){
-        this.rotation = rotation;
+    public void setRotation(int angle){
+        this.angle = angle;
+    }
+
+    public void updateVelocity(){
+        xVelocity = defaultVelocity;
+        yVelocity = defaultVelocity;
+        double radians = (Math.PI/180)*(angle - 90);
+        xVelocity = (int)(xVelocity * Math.cos(radians));
+        yVelocity = (int)(yVelocity * Math.sin(radians));
+        Log.d("Player move()", "\n\n\txVelocity: " + xVelocity + "\n\tyVelocity: " + yVelocity);
     }
 }
