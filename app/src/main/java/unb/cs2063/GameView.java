@@ -75,7 +75,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         thread.start();
         player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.arrow));
         apple = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
-        shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
+        shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
     }
 
     @Override
@@ -94,11 +94,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     //Use to update events on the screen
     public void update() {
-        //player.update();
-        //apple.update();
-        shot.update();
         apple.Move();
 
+        //Collision between object and player (move into player class)
         int appleX = apple.getCenterX();
         int appleY = apple.getCenterY();
 
@@ -112,11 +110,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
 
-        //Sets the arrow to follow the apple
-        //int rotation = calcAngle(arrowX, arrowY, appleX, appleY);
-        //player.setRotation(rotation);
+        //Collision between shot and object (checks from center of shot to anywhere on object)
+        shot.update();
+        if(shot.fired){
+            shot.collision(apple.getImage(), appleX, appleY);
+            if(shot.impact){
+                player.addPoints(10);
+                Log.d("GameView", "Player score: " + player.getPoints());
+            }
+        }
 
-        player.setRotation((int)accelY*20);
+        //Player movement calls
+        player.setRotation((int)accelY*25);
         player.move((accelX));
     }
 
@@ -136,19 +141,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             shot.setParameters(player.getCenterX(), player.getCenterY(), (int)accelY*25);
             shot.shotFired();
             shot.updateVelocity();
-            player.setRotation(angle);
             Log.d("Touch Event", angle + " Degrees");
-            /*
-            //x and y for bitmap (from top corner)
-            int arrowX = player.getCenterX();
-            int arrowY = player.getCenterY();
 
-            int rotation = calcAngle(arrowX, arrowY, clickX, clickY);
-            player.setRotation(rotation);
-            */
 
-            //apple.setX(clickX);
-            //apple.setY(clickY);
 
             return true;
         }

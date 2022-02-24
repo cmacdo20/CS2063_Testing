@@ -12,6 +12,7 @@ public class Shot {
     private int angle;
 
     public boolean fired = false;
+    public boolean impact = false;
 
     private int xVelocity, yVelocity;
 
@@ -44,6 +45,14 @@ public class Shot {
                 xVelocity = 20;
                 yVelocity = 20;
             }
+            else if(impact){
+                fired = false;
+                x = -100;
+                y = -100;
+                xVelocity = 20;
+                yVelocity = 20;
+                impact = false;
+            }
         }
     }
 
@@ -59,5 +68,16 @@ public class Shot {
         double radians = (Math.PI/180)*(angle - 90);
         xVelocity = (int)(xVelocity * Math.cos(radians));
         yVelocity = (int)(yVelocity * Math.sin(radians));
+    }
+
+    public void collision(Bitmap object, int x, int y){
+        if(this.x < x + object.getWidth() && this.x > x) {
+            if (this.y < y + object.getHeight() && this.y > y) {
+                impact = true;
+            }
+        }
+        else{
+            impact = false;
+        }
     }
 }

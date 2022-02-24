@@ -14,6 +14,8 @@ public class Player {
     private int x, y;
     private int angle;
 
+    private int points = 0;
+
     private int defaultVelocity = 5;
     private double acceleration = 0;
     private int xVelocity = defaultVelocity;
@@ -154,5 +156,13 @@ public class Player {
         xVelocity = (int)(xVelocity * Math.cos(radians));
         yVelocity = (int)(yVelocity * Math.sin(radians));
         Log.d("Player move()", "\n\n\txVelocity: " + xVelocity + "\n\tyVelocity: " + yVelocity);
+    }
+
+    public void addPoints(int points){
+        this.points += points;
+    }
+
+    public int getPoints(){
+        return points;
     }
 }

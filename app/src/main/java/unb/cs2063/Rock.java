@@ -113,4 +113,8 @@ public class Rock {
         this.rotation = rotation;
     }
 
+    public Bitmap getImage(){
+        return image;
+    }
+
 }
