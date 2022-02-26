@@ -11,8 +11,10 @@ public class Rock {
     private int x, y;
     private int rotation;
 
-    private int xVelocity = 10;
-    private int yVelocity = 5;
+    public boolean destroyed = false;
+
+    private int xVelocity = 7;
+    private int yVelocity = 3;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
@@ -98,6 +100,11 @@ public class Rock {
 
     public int getCenterY(){
         return y + (image.getHeight()/2);
+    }
+
+    public void setCoords(int x, int y){
+        this.x = x;
+        this.y = y;
     }
 
     public boolean collision(int objX, int objY){

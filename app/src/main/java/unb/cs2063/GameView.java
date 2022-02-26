@@ -19,9 +19,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private MainThread thread;
     private Player player;
-    private Rock apple;
+    private Rock rock1;
+    private Rock rock2;
     private Shot shot;
-    private boolean appleDead = false;
 
     //Accelerometer related variables
     private SensorManager sensorManager;
@@ -74,7 +74,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         thread.setRunning(true);
         thread.start();
         player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.arrow));
-        apple = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
+        rock1 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),100,100);
+        rock2 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
+        rock2.destroyed = true;
         shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
     }
 
@@ -94,28 +96,53 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     //Use to update events on the screen
     public void update() {
-        apple.Move();
+        if(!rock1.destroyed){
+            rock1.Move();
+        }
+        else if(!rock2.destroyed){
+            rock2.Move();
+        }
 
         //Collision between object and player (move into player class)
-        int appleX = apple.getCenterX();
-        int appleY = apple.getCenterY();
+        int rock1X = rock1.getCenterX();
+        int rock1Y = rock1.getCenterY();
+
+        int rock2X = rock1.getCenterX();
+        int rock2Y = rock1.getCenterY();
 
         int arrowX = player.getCenterX();
         int arrowY = player.getCenterY();
 
-        if(player.collision(appleX, appleY)){
-            if(apple.collision(arrowX, arrowY)) {
-                apple.flipxVelocity();
-                apple.flipyVelocity();
+        //Player collision with rocks, add for rock 2
+        if(player.collision(rock1X, rock1Y)){
+            if(rock1.collision(arrowX, arrowY)) {
+                rock1.flipxVelocity();
+                rock1.flipyVelocity();
             }
         }
 
         //Collision between shot and object (checks from center of shot to anywhere on object)
         shot.update();
         if(shot.fired){
-            shot.collision(apple.getImage(), appleX, appleY);
+            if(!rock1.destroyed){
+                shot.collision(rock1.getImage(), rock1X, rock1Y);
+            }
+            else if(!rock2.destroyed){
+                shot.collision(rock2.getImage(), rock2X, rock2Y);
+            }
             if(shot.impact){
                 player.addPoints(10);
+                if(!rock1.destroyed){
+                    rock1.destroyed = true;
+                    rock2.destroyed = false;
+                    //will need to make this random
+                    rock2.setCoords(0,0);
+                }
+                else if(!rock2.destroyed){
+                    rock2.destroyed = true;
+                    rock1.destroyed = false;
+                    rock1.setCoords(0,0);
+                }
                 Log.d("GameView", "Player score: " + player.getPoints());
             }
         }
@@ -143,8 +170,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             shot.updateVelocity();
             Log.d("Touch Event", angle + " Degrees");
 
-
-
             return true;
         }
         return false;
@@ -160,19 +185,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         if(shot.fired){
             shot.draw(canvas);
         }
-        if (appleDead){
-            return;
+        if(!rock1.destroyed && rock2.destroyed){
+            rock1.draw(canvas);
         }
-        apple.draw(canvas);
-    }
-
-    public void deleteApple(){
-        appleDead = true;
-        //Move the bitmap off screen
-        apple.setX(-100);
-        apple.setY(-100);
-        apple.setxVelocity(0);
-        apple.setyVelocity(0);
+        else if(!rock2.destroyed && rock1.destroyed){
+            rock2.draw(canvas);
+        }
     }
 
     //returns the angle in degrees (0-359) assuming a 90 degree offset
