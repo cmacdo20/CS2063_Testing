@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,7 +14,9 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-//this class is where the canvas(background which everything is drawn on) is updated and things are
+// FIXME: Collision is only detected on the first rock even if its not on screen.
+
+// this class is where the canvas(background which everything is drawn on) is updated and things are
 // added to it
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
@@ -22,6 +25,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Rock rock1;
     private Rock rock2;
     private Shot shot;
+
+    private Paint textPaint;
 
     //Accelerometer related variables
     private SensorManager sensorManager;
@@ -62,6 +67,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         sensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(sensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+        //Setting up the text paint
+        textPaint = new Paint();
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(30);
     }
 
     @Override
@@ -191,6 +201,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         else if(!rock2.destroyed && rock1.destroyed){
             rock2.draw(canvas);
         }
+        canvas.drawText("Score: " + player.points, 20, 40, textPaint);
     }
 
     //returns the angle in degrees (0-359) assuming a 90 degree offset

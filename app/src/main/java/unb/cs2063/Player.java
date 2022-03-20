@@ -14,7 +14,7 @@ public class Player {
     private int x, y;
     private int angle;
 
-    private int points = 0;
+    public int points = 0;
 
     private int defaultVelocity = 5;
     private double acceleration = 0;

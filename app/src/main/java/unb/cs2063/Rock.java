@@ -17,6 +17,7 @@ public class Rock {
     private int yVelocity = 3;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+    private int MAXSPEED;
 
     private final static String TAG = "Player";
 
@@ -33,6 +34,8 @@ public class Rock {
         canvas.save();
         //Rotate around the center of the bitmap
         canvas.rotate(rotation, x + (image.getWidth()/2), y + (image.getHeight()/2));
+        //should be using translate
+        //canvas.translate();
         canvas.drawBitmap(image, x, y, null);
         canvas.restore();
     }
