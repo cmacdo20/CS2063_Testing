@@ -24,9 +24,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private MainThread thread;
     private Player player;
-    private Rock rock1;
-    private Rock rock2;
     private ArrayList<Shot> shotList;
+    private ArrayList<Rock> rockList;
+    private int MAXROCKS = 5;
 
     private Paint textPaint;
 
@@ -54,28 +54,30 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     };
 
+    // PLayer movement from accelerometer
     private float accelX = 0;
     private float accelY = 0;
 
     public GameView(Context context) {
         super(context);
-
+        // Setting up thread and surface
         getHolder().addCallback(this);
-
         thread = new MainThread(getHolder(), this);
         setFocusable(true);
 
-        //Setting up the sensor and sensor manager and opening a listener (will need to close at some point)
+        // Setting up the sensor and sensor manager and opening a listener (will need to close at some point)
         sensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(sensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 
-        //Setting up the text paint
+        // Setting up the text paint
         textPaint = new Paint();
         textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(30);
 
+        // Create arraylists for shots and rocks
         shotList = new ArrayList<Shot>();
+        rockList = new ArrayList<Rock>();
     }
 
     @Override
@@ -83,15 +85,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     }
 
+    //Called when creating the surface
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         thread.setRunning(true);
         thread.start();
+        // Create player
         player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.arrow));
-        rock1 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),100,100);
-        rock2 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
-        rock2.destroyed = true;
-        //shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
+        // Create initial rock
+        Rock rock = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),100,100);
+        rockList.add(rock);
     }
 
     @Override
@@ -110,61 +113,45 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     //Use to update events on the screen
     public void update() {
-        if(!rock1.destroyed){
-            rock1.Move();
-        }
-        else if(!rock2.destroyed){
-            rock2.Move();
-        }
 
-        //Collision between object and player (move into player class)
-        int rock1X = rock1.getCenterX();
-        int rock1Y = rock1.getCenterY();
+        // Updates rocks
+        for(Rock rock : rockList) {
+            rock.Move();
 
-        int rock2X = rock1.getCenterX();
-        int rock2Y = rock1.getCenterY();
-
-        int arrowX = player.getCenterX();
-        int arrowY = player.getCenterY();
-
-        //Player collision with rocks, add for rock 2
-        if(player.collision(rock1X, rock1Y)){
-            if(rock1.collision(arrowX, arrowY)) {
-                rock1.flipxVelocity();
-                rock1.flipyVelocity();
+            // Check for collision between player and rock, if collision flip rock velocity
+            if (player.collision(rock.getCenterX(), rock.getCenterY())) {
+                if (rock.collision(player.getCenterX(), player.getCenterY())) {
+                    rock.flipxVelocity();
+                    rock.flipyVelocity();
+                }
             }
         }
 
-
-
-        //Collision between shot and object (checks from center of shot to anywhere on object)
+        // Collision between shot and rock (checks from center of shot to anywhere on object)
+        // if rock is hit spawns two new ones as long as max count is not reached
         for(int i = 0; i < shotList.size(); i++) {
             Shot shot = shotList.get(i);
             shot.update();
-            if (shot.fired) {
-                if (!rock1.destroyed) {
-                    shot.collision(rock1.getImage(), rock1X, rock1Y);
-                } else if (!rock2.destroyed) {
-                    shot.collision(rock2.getImage(), rock2X, rock2Y);
-                }
-                if (shot.impact) {
-                    shotList.remove(i);
-                    player.addPoints(10);
-                    if (!rock1.destroyed) {
-                        rock1.destroyed = true;
-                        rock2.destroyed = false;
-                        //will need to make this random
-                        rock2.setCoords(0, 0);
-                    } else if (!rock2.destroyed) {
-                        rock2.destroyed = true;
-                        rock1.destroyed = false;
-                        rock1.setCoords(0, 0);
+            for(int j = 0; j < rockList.size(); j++) {
+                Rock rock = rockList.get(j);
+                if (shot.fired) {
+                    if (!rock.destroyed)
+                        shot.collision(rock.getImage(), rock.getCenterX(), rock.getCenterY());
+                    if (shot.impact) {
+                        shotList.remove(i);
+                        rockList.remove(j);
+                        player.addPoints((int)(Math.random()*25));
+
+                        rockList.add(new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
+                                (int)(Math.random()*300),(int)(Math.random()*300)));
+                        if(rockList.size() <= MAXROCKS)
+                            rockList.add(new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
+                                    (int)Math.random()*300, (int)Math.random()*300));
                     }
-                    Log.d("GameView", "Player score: " + player.getPoints());
                 }
+                if (!shot.fired)
+                    shotList.remove(i);
             }
-            if(!shot.fired)
-                shotList.remove(i);
         }
 
         //Player movement calls
@@ -173,7 +160,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     //This method is called when the screen is touched
-    //TODO: create more shots when screen is spammed (make a limit)
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if(event.getAction() == MotionEvent.ACTION_DOWN){
@@ -202,16 +188,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
+        // Draw background
         canvas.drawColor(Color.WHITE);
+        // Draw player
         player.draw(canvas);
+        // Draw all shots
         for(Shot shot : shotList)
             shot.draw(canvas);
-        if(!rock1.destroyed && rock2.destroyed){
-            rock1.draw(canvas);
-        }
-        else if(!rock2.destroyed && rock1.destroyed){
-            rock2.draw(canvas);
-        }
+        // Drawn all rocks
+        for(Rock rock : rockList)
+            rock.draw(canvas);
+        // Draw score
         canvas.drawText("Score: " + player.points, 20, 40, textPaint);
     }
 
