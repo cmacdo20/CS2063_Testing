@@ -1,6 +1,7 @@
 package unb.cs2063;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -16,25 +17,34 @@ import android.view.SurfaceView;
 
 import java.util.ArrayList;
 
-// FIXME: Collision is only detected on the first rock even if its not on screen.
+// TODO: Adjust constructor to take in screen size, initial position
 
 // this class is where the canvas(background which everything is drawn on) is updated and things are
 // added to it
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private MainThread thread;
-    private Player player;
-    private ArrayList<Shot> shotList;
-    private ArrayList<Rock> rockList;
+
+    // Sprites
+    private Sprite player;
+    private ArrayList<Sprite> shotList;
+    private ArrayList<Sprite> rockList;
     private int MAXROCKS = 5;
 
+    // Screen related variables
     private Paint textPaint;
+    private double screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+    private double screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
-    //Accelerometer related variables
+    // Accelerometer related variables
     private SensorManager sensorManager;
     private Sensor sensor;
 
-    //Sensor event listener will be called when sensor event is noticed
+    // PLayer movement from accelerometer
+    private float accelX = 0;
+    private float accelY = 0;
+
+    // Sensor event listener will be called when sensor event is noticed
     private final SensorEventListener sensorEventListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent sensorEvent) {
@@ -45,7 +55,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             accelX = sensorEvent.values[0];
             accelY = sensorEvent.values[1];
             //Log.d("Sensor Changed", "Vals:\tX: " + sensorEvent.values[0] +
-            //        "\n\tY: " + sensorEvent.values[1] + "\n\tZ: " + sensorEvent.values[2]);
+            //        "\tY: " + sensorEvent.values[1] + "\n\tZ: " + sensorEvent.values[2]);
         }
 
         @Override
@@ -53,10 +63,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         }
     };
-
-    // PLayer movement from accelerometer
-    private float accelX = 0;
-    private float accelY = 0;
 
     public GameView(Context context) {
         super(context);
@@ -76,24 +82,33 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         textPaint.setTextSize(30);
 
         // Create arraylists for shots and rocks
-        shotList = new ArrayList<Shot>();
-        rockList = new ArrayList<Rock>();
+        shotList = new ArrayList<Sprite>();
+        rockList = new ArrayList<Sprite>();
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-    }
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
     //Called when creating the surface
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         thread.setRunning(true);
         thread.start();
-        // Create player
-        player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.arrow));
+
+        // Create player and set to center of screen
+        player = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.rocket_transparent));
+        player.setScreenSize(screenWidth, screenHeight);
+        player.position.set((screenWidth/2) - (player.image.getWidth()/2),
+                (screenHeight/2) - (player.image.getHeight()/2));
+        player.wrapOn = true;
+
         // Create initial rock
-        Rock rock = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),100,100);
+        Sprite rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+        rock.setScreenSize(screenWidth, screenHeight);
+        rock.wrapOn = true;
+        rock.position.set(100, 100);
+        rock.velocity.setLength(Math.random()*5);
+        rock.velocity.setAngle(Math.random()*360);
         rockList.add(rock);
     }
 
@@ -114,69 +129,98 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     //Use to update events on the screen
     public void update() {
 
-        // Updates rocks
-        for(Rock rock : rockList) {
-            rock.Move();
-
-            // Check for collision between player and rock, if collision flip rock velocity
-            if (player.collision(rock.getCenterX(), rock.getCenterY())) {
-                if (rock.collision(player.getCenterX(), player.getCenterY())) {
-                    rock.flipxVelocity();
-                    rock.flipyVelocity();
-                }
-            }
+        // Player movement calls
+        player.rotation = (int)accelY*25;
+        // Adjust movement based on tilt
+        if(accelX < 8) {
+            player.velocity.setLength(3);
+            player.velocity.setAngle(player.rotation);
         }
+        else{
+            player.velocity.setLength(0);
+        }
+        player.update();
 
-        // Collision between shot and rock (checks from center of shot to anywhere on object)
-        // if rock is hit spawns two new ones as long as max count is not reached
+        // Shots
         for(int i = 0; i < shotList.size(); i++) {
-            Shot shot = shotList.get(i);
+            Sprite shot = shotList.get(i);
             shot.update();
-            for(int j = 0; j < rockList.size(); j++) {
-                Rock rock = rockList.get(j);
-                if (shot.fired) {
-                    if (!rock.destroyed)
-                        shot.collision(rock.getImage(), rock.getCenterX(), rock.getCenterY());
-                    if (shot.impact) {
-                        shotList.remove(i);
-                        rockList.remove(j);
-                        player.addPoints((int)(Math.random()*25));
 
-                        rockList.add(new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                                (int)(Math.random()*300),(int)(Math.random()*300)));
-                        if(rockList.size() <= MAXROCKS)
-                            rockList.add(new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                                    (int)Math.random()*300, (int)Math.random()*300));
-                    }
-                }
-                if (!shot.fired)
-                    shotList.remove(i);
+            if(shot.offScreen){
+                shotList.remove(i);
             }
         }
 
-        //Player movement calls
-        player.setRotation((int)accelY*25);
-        player.move((accelX));
+        // Checking for collision between rock and shot
+        for(int i = 0; i < shotList.size(); i++){
+            Sprite shot = shotList.get(i);
+            for(int j = 0; j < rockList.size(); j++){
+                Sprite rock = rockList.get(j);
+                if(shot.collision(rock)){
+                    shotList.remove(i);
+                    player.addPoints((int)(Math.random()*25));
+                    rockList.remove(j);
+
+                    // Add two new rocks
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.wrapOn = true;
+                    rock.position.set(100, 100);
+                    rock.velocity.setLength(Math.random()*5);
+                    rock.velocity.setAngle(Math.random()*360);
+                    rockList.add(rock);
+
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.wrapOn = true;
+                    rock.position.set(100, 100);
+                    rock.velocity.setLength(Math.random()*5);
+                    rock.velocity.setAngle(Math.random()*360);
+                    rockList.add(rock);
+
+                }
+            }
+        }
+
+        // Checking for collision between player and rock
+        for(int j = 0; j < rockList.size(); j++){
+            Sprite rock = rockList.get(j);
+            if(player.collision(rock)){
+                rockList.remove(j);
+                player.addPoints(-100);
+
+                // if all rocks get removed add a new one
+                if(rockList.size() == 0){
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.wrapOn = true;
+                    rock.position.set(100, 100);
+                    rock.velocity.setLength(Math.random()*5);
+                    rock.velocity.setAngle(Math.random()*360);
+                    rockList.add(rock);
+                }
+            }
+
+        }
+
+        // Rocks
+        for(Sprite rock : rockList)
+            rock.update();
     }
 
     //This method is called when the screen is touched
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if(event.getAction() == MotionEvent.ACTION_DOWN){
-            //x and y values for touch input
-            int clickX = (int)event.getX();
-            int clickY = (int)event.getY();
-            //deleteApple();
 
-            Shot shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
-            //angle to place pressed on screen
-            int angle = calcAngle(player.getCenterX(), player.getCenterY(), clickX, clickY);
-            //shot.setParameters(player.getCenterX(), player.getCenterY(), angle);
-            shot.setParameters(player.getCenterX(), player.getCenterY(), (int)accelY*25);
-            shot.shotFired();
-            shot.updateVelocity();
+            Sprite shot = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.shot));
+            shot.setScreenSize(screenWidth, screenHeight);
+            shot.position.set(player.position.x + (player.image.getWidth()/2) -
+                            (shot.image.getWidth()/2),
+                    player.position.y + (player.image.getHeight()/2) - (shot.image.getHeight()/2));
+            shot.velocity.setLength(10);
+            shot.velocity.setAngle(player.rotation);
             shotList.add(shot);
-            Log.d("Touch Event", angle + " Degrees");
 
             return true;
         }
@@ -193,21 +237,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         // Draw player
         player.draw(canvas);
         // Draw all shots
-        for(Shot shot : shotList)
+        for(Sprite shot : shotList)
             shot.draw(canvas);
-        // Drawn all rocks
-        for(Rock rock : rockList)
+        // Draw all rocks
+        for(Sprite rock : rockList)
             rock.draw(canvas);
         // Draw score
         canvas.drawText("Score: " + player.points, 20, 40, textPaint);
-    }
-
-    //returns the angle in degrees (0-359) assuming a 90 degree offset
-    //x1 and y1 is the origin point
-    public static int calcAngle(int x1, int y1, int x2, int y2){
-        double angle = Math.toDegrees(Math.atan2(y2 - y1, x2 - x1));
-        angle = angle + 90;
-        angle = angle + Math.ceil(-angle / 360) * 360;
-        return (int)angle;
     }
 }

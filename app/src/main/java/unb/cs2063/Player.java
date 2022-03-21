@@ -14,7 +14,7 @@ public class Player {
     private int x, y;
     private int angle;
 
-    public int points = 0;
+    private int points = 0;
 
     private int defaultVelocity = 5;
     private double acceleration = 0;
@@ -88,6 +88,8 @@ public class Player {
         if(acceleration > 0){
             xVelocity *= acceleration;
             yVelocity += acceleration;
+            //xVelocity += 10;
+            //yVelocity += 10;
         }
         if(acceleration <= 0){
             xVelocity = 0;
