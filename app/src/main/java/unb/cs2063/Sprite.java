@@ -20,16 +20,14 @@ public class Sprite {
     private double screenWidth;
     private double screenHeight;
 
-    public Sprite(){
+    public Sprite(Bitmap bmp, double screenWidth, double screenHeight, double x, double y){
+        this.setImage(bmp);
+        this.setScreenSize(screenWidth, screenHeight);
         position = new Vector();
         velocity = new Vector();
         rotation = 0;
         imageBounds = new Collision();
-    }
-
-    public Sprite(Bitmap bmp){
-        this();
-        this.setImage(bmp);
+        position.set(x, y);
     }
 
     public void setImage(Bitmap bmp){
