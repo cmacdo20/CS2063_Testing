@@ -14,6 +14,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
+
 // FIXME: Collision is only detected on the first rock even if its not on screen.
 
 // this class is where the canvas(background which everything is drawn on) is updated and things are
@@ -24,7 +26,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Player player;
     private Rock rock1;
     private Rock rock2;
-    private Shot shot;
+    private ArrayList<Shot> shotList;
 
     private Paint textPaint;
 
@@ -72,6 +74,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         textPaint = new Paint();
         textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(30);
+
+        shotList = new ArrayList<Shot>();
     }
 
     @Override
@@ -87,7 +91,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         rock1 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.rock),100,100);
         rock2 = new Rock(BitmapFactory.decodeResource(getResources(),R.drawable.myapple),100,100);
         rock2.destroyed = true;
-        shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
+        //shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
     }
 
     @Override
@@ -131,30 +135,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
 
+
+
         //Collision between shot and object (checks from center of shot to anywhere on object)
-        shot.update();
-        if(shot.fired){
-            if(!rock1.destroyed){
-                shot.collision(rock1.getImage(), rock1X, rock1Y);
-            }
-            else if(!rock2.destroyed){
-                shot.collision(rock2.getImage(), rock2X, rock2Y);
-            }
-            if(shot.impact){
-                player.addPoints(10);
-                if(!rock1.destroyed){
-                    rock1.destroyed = true;
-                    rock2.destroyed = false;
-                    //will need to make this random
-                    rock2.setCoords(0,0);
+        for(int i = 0; i < shotList.size(); i++) {
+            Shot shot = shotList.get(i);
+            shot.update();
+            if (shot.fired) {
+                if (!rock1.destroyed) {
+                    shot.collision(rock1.getImage(), rock1X, rock1Y);
+                } else if (!rock2.destroyed) {
+                    shot.collision(rock2.getImage(), rock2X, rock2Y);
                 }
-                else if(!rock2.destroyed){
-                    rock2.destroyed = true;
-                    rock1.destroyed = false;
-                    rock1.setCoords(0,0);
+                if (shot.impact) {
+                    shotList.remove(i);
+                    player.addPoints(10);
+                    if (!rock1.destroyed) {
+                        rock1.destroyed = true;
+                        rock2.destroyed = false;
+                        //will need to make this random
+                        rock2.setCoords(0, 0);
+                    } else if (!rock2.destroyed) {
+                        rock2.destroyed = true;
+                        rock1.destroyed = false;
+                        rock1.setCoords(0, 0);
+                    }
+                    Log.d("GameView", "Player score: " + player.getPoints());
                 }
-                Log.d("GameView", "Player score: " + player.getPoints());
             }
+            if(!shot.fired)
+                shotList.remove(i);
         }
 
         //Player movement calls
@@ -172,12 +182,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             int clickY = (int)event.getY();
             //deleteApple();
 
+            Shot shot = new Shot(BitmapFactory.decodeResource(getResources(),R.drawable.shot),100,100);
             //angle to place pressed on screen
             int angle = calcAngle(player.getCenterX(), player.getCenterY(), clickX, clickY);
             //shot.setParameters(player.getCenterX(), player.getCenterY(), angle);
             shot.setParameters(player.getCenterX(), player.getCenterY(), (int)accelY*25);
             shot.shotFired();
             shot.updateVelocity();
+            shotList.add(shot);
             Log.d("Touch Event", angle + " Degrees");
 
             return true;
@@ -192,9 +204,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super.draw(canvas);
         canvas.drawColor(Color.WHITE);
         player.draw(canvas);
-        if(shot.fired){
+        for(Shot shot : shotList)
             shot.draw(canvas);
-        }
         if(!rock1.destroyed && rock2.destroyed){
             rock1.draw(canvas);
         }
