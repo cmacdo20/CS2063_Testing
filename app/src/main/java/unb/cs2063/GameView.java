@@ -2,6 +2,7 @@ package unb.cs2063;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -94,18 +95,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         thread.start();
 
         // Create player and set to center of screen
-        player = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.rocket_transparent),
-                screenWidth, screenHeight,
-                (screenWidth/2) - (player.image.getWidth()/2),
+        player = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.rocket));
+        player.setScreenSize(screenWidth, screenHeight);
+        player.position.set((screenWidth/2) - (player.image.getWidth()/2),
                 (screenHeight/2) - (player.image.getHeight()/2));
         player.wrapOn = true;
 
         // Create initial rock
-        Sprite rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                screenWidth, screenHeight, 100, 100);
+        Sprite rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+        rock.setScreenSize(screenWidth, screenHeight);
+        rock.position.set(100,100);
         rock.wrapOn = true;
         rock.velocity.setLength(Math.random()*5);
         rock.velocity.setAngle(Math.random()*360);
+        rock.setImage(Bitmap.createScaledBitmap(rock.image, 250, 250, false));
         rockList.add(rock);
     }
 
@@ -159,15 +162,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     rockList.remove(j);
 
                     // Add two new rocks
-                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                            screenWidth, screenHeight, 100, 100);
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.position.set(100,100);
                     rock.wrapOn = true;
                     rock.velocity.setLength(Math.random()*5);
                     rock.velocity.setAngle(Math.random()*360);
                     rockList.add(rock);
 
-                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                            screenWidth, screenHeight, 100, 100);
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.position.set(100,100);
                     rock.wrapOn = true;
                     rock.velocity.setLength(Math.random()*5);
                     rock.velocity.setAngle(Math.random()*360);
@@ -185,11 +190,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
                 // if all rocks get removed add a new one
                 if(rockList.size() == 0){
-                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock),
-                            screenWidth, screenHeight, 100, 100);
+                    rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+                    rock.setScreenSize(screenWidth, screenHeight);
+                    rock.position.set(100,100);
                     rock.wrapOn = true;
                     rock.velocity.setLength(Math.random()*5);
                     rock.velocity.setAngle(Math.random()*360);
+                    //Creates scalled bitmap
+                    rock.setImage(Bitmap.createScaledBitmap(rock.image, 250, 250, false));
                     rockList.add(rock);
                 }
             }
@@ -206,8 +214,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public boolean onTouchEvent(MotionEvent event){
         if(event.getAction() == MotionEvent.ACTION_DOWN){
 
-            Sprite shot = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.shot),
-                    screenWidth, screenHeight,100, 100);
+            Sprite shot = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.shot));
+            shot.setScreenSize(screenWidth, screenHeight);
             shot.position.set(player.position.x + (player.image.getWidth()/2) - (shot.image.getWidth()/2),
                     player.position.y + (player.image.getHeight()/2) - (shot.image.getHeight()/2));
             shot.velocity.setLength(10);
@@ -226,11 +234,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super.draw(canvas);
         // Draw background
         canvas.drawColor(Color.WHITE);
-        // Draw player
-        player.draw(canvas);
         // Draw all shots
         for(Sprite shot : shotList)
             shot.draw(canvas);
+        // Draw player
+        player.draw(canvas);
         // Draw all rocks
         for(Sprite rock : rockList)
             rock.draw(canvas);
