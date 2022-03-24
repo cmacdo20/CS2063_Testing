@@ -26,6 +26,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     // Sprites
     private Sprite player;
+    private int lives = 3;
     private ArrayList<Sprite> shotList;
     private ArrayList<Sprite> rockList;
     private int maxRocks = 1;
@@ -117,7 +118,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     //Use to update events on the screen
-    public void update() {
+    public void update() throws InterruptedException {
 
         // Player rotation based on phone Y tilt
         player.rotation = (int)accelY*25;
@@ -164,19 +165,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
                     // check the rock level and spawn the appropriate child rock(s)
                     if(rock.level == 1) {
-                        while(Math.random() > 0.25) {
+                        for(int n = 0; n < 2; n++) {
                             this.createRock(xSpawn, ySpawn, 5,
                                     150, 150, 2);
                         }
                     }
                     else if(rock.level == 2){
-                        while(Math.random() > 0.3) {
+                        for(int n = 0; n < 3; n++) {
                             this.createRock(xSpawn, ySpawn, 6,
                                     100, 100, 3);
                         }
                     }
                     else if(rock.level == 3){
-                        while (Math.random() > 0.35) {
+                        for(int n = 0; n < 4; n++) {
                             this.createRock(xSpawn, ySpawn, 7,
                                     75, 75, 4);
                         }
@@ -207,8 +208,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             Sprite rock = rockList.get(j);
             if(player.collision(rock)){
                 rockList.remove(j);
-                //player.addPoints(-100);
-                //this.playerKilled();
+                lives--;
+                if(lives == 0)
+                    this.playerKilled();
 
                 // if all rocks get removed add a new one
                 if(rockList.size() == 0){
@@ -235,6 +237,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             shot.velocity.setLength(20);
             shot.velocity.setAngle(player.rotation);
             shotList.add(shot);
+
+            double clickX = event.getX();
+            double clickY = event.getY();
+
+            // Used to check if the pause button is clicked
+            if(clickX > screenWidth-100 && clickY < 100){
+                gamePaused();
+            }
             return true;
         }
         return false;
@@ -258,6 +268,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         // Draw score and level
         canvas.drawText("Score: " + player.points, 20, 40, textPaint);
         canvas.drawText("Level: " + maxRocks, 20, 80, textPaint);
+        canvas.drawText("Lives: " + lives, 20, 120, textPaint);
+        // FIXME: Replace with pause logo
+        canvas.drawCircle((float)(screenWidth-50),50,25,textPaint);
     }
 
     // Creates a rock and adds it to the rockList
@@ -292,7 +305,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     // Used to launch the game over activity and end the thread
-    private void playerKilled(){
+    private void playerKilled() throws InterruptedException {
+        //thread.join();
+    }
+
+    // Used to launch the pause activity
+    private void gamePaused(){
 
     }
 }
