@@ -16,6 +16,7 @@ public class Sprite {
 
     public boolean offScreen = false;
     public int points = 0;
+    public int level = 1;
 
     private double screenWidth;
     private double screenHeight;
@@ -131,5 +132,13 @@ public class Sprite {
 
     public void addPoints(int points){
         this.points += points;
+    }
+
+    public void incrementLevel(){
+        level++;
+    }
+
+    public void setLevel(int level){
+        this.level = level;
     }
 }
