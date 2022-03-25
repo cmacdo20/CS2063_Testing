@@ -27,6 +27,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     // Sprites
     private Sprite player;
     private int lives = 3;
+    private Sprite pause;
     private ArrayList<Sprite> shotList;
     private ArrayList<Sprite> rockList;
     private int maxRocks = 1;
@@ -101,6 +102,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         player.position.set((screenWidth/2) - (player.image.getWidth()/2),
                 (screenHeight/2) - (player.image.getHeight()/2));
         player.edgeOn = true;
+
+        // Sprite for pause button
+        pause = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.pause));
+        pause.setScreenSize(screenWidth, screenHeight);
+        pause.position.set((screenWidth - 105), 5);
     }
 
     @Override
@@ -176,7 +182,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                                     100, 100, 3);
                         }
                     }
-                    else if(rock.level == 3){
+                    else if(rock.level == 2){
                         for(int n = 0; n < 4; n++) {
                             this.createRock(xSpawn, ySpawn, 7,
                                     75, 75, 4);
@@ -219,7 +225,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
 
-        // Upadte all rocks
+        // Update all rocks
         for(Sprite rock : rockList)
             rock.update();
     }
@@ -228,23 +234,25 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if(event.getAction() == MotionEvent.ACTION_DOWN){
-            // Everytime the screen is touched a shot is created
-            // Shots exist until they are completely off the screen.
-            Sprite shot = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.shot));
-            shot.setScreenSize(screenWidth, screenHeight);
-            shot.position.set(player.position.x + (player.image.getWidth()/2) - (shot.image.getWidth()/2),
-                    player.position.y + (player.image.getHeight()/2) - (shot.image.getHeight()/2));
-            shot.velocity.setLength(20);
-            shot.velocity.setAngle(player.rotation);
-            shotList.add(shot);
-
             double clickX = event.getX();
             double clickY = event.getY();
 
             // Used to check if the pause button is clicked
             if(clickX > screenWidth-100 && clickY < 100){
                 gamePaused();
+                return true;
             }
+            // Everytime the screen is touched a shot is created
+            // Shots exist until they are completely off the screen.
+            Sprite shot = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.laser));
+            shot.setScreenSize(screenWidth, screenHeight);
+            shot.position.set(player.position.x + (player.image.getWidth()/2) - (shot.image.getHeight()/2),
+                    player.position.y + (player.image.getHeight()/2) - (shot.image.getWidth()/2));
+            shot.velocity.setLength(20);
+            shot.velocity.setAngle(player.rotation);
+            shot.rotation = player.rotation - 90;
+            shotList.add(shot);
+
             return true;
         }
         return false;
@@ -269,13 +277,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         canvas.drawText("Score: " + player.points, 20, 40, textPaint);
         canvas.drawText("Level: " + maxRocks, 20, 80, textPaint);
         canvas.drawText("Lives: " + lives, 20, 120, textPaint);
-        // FIXME: Replace with pause logo
-        canvas.drawCircle((float)(screenWidth-50),50,25,textPaint);
+        // Draw pause sprite
+        pause.draw(canvas);
     }
 
     // Creates a rock and adds it to the rockList
     private void createRock(double posX, double posY, double velocity, int scaleWidth, int scaleHeight, int level){
-        Sprite rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.rock));
+        Sprite rock = new Sprite(BitmapFactory.decodeResource(getResources(),R.drawable.asteroid));
         rock.setScreenSize(screenWidth, screenHeight);
         rock.position.set(posX, posY);
         rock.wrapOn = true;
@@ -311,6 +319,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     // Used to launch the pause activity
     private void gamePaused(){
-
+        this.createRock(this.generateSpawnX(), this.generateSpawnY(), 5, 200, 200,1);
     }
 }

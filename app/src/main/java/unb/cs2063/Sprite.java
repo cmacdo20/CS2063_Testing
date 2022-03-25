@@ -13,7 +13,6 @@ public class Sprite {
     public boolean wrapOn = false;
     public boolean edgeOn = false;
 
-
     public boolean offScreen = false;
     public int points = 0;
     public int level = 1;
@@ -43,6 +42,7 @@ public class Sprite {
         return imageBounds;
     }
 
+    // Checks for collision between two sprites
     public boolean collision(Sprite obj){
         return this.getImageBounds().collision(obj.getImageBounds());
     }
@@ -58,6 +58,7 @@ public class Sprite {
         spriteOffScreen();
     }
 
+    // draw and rotate sprite to the canvas
     public void draw(Canvas canvas){
         canvas.save();
         canvas.rotate((float)rotation,
@@ -67,12 +68,13 @@ public class Sprite {
         canvas.restore();
     }
 
+    // sets the size of the screen
     public void setScreenSize(double screenWidth, double screenHeight){
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
     }
 
-    // FIXME: Corners break
+    // Limits sprite to the screen area
     public void screenEdge(){
         // if the player has reached a X bound can still move on y axis
         if((position.x > screenWidth - image.getWidth()) || (position.x < 0)){
@@ -98,10 +100,40 @@ public class Sprite {
             else if((velocity.y > 1) && (position.y < 0))
                 position.add(velocity.x, velocity.y);
         }
+        // if in a corner
+        else if(((position.x > screenWidth - image.getWidth()) || (position.x < 0)) &&
+                ((position.y > screenHeight - image.getHeight()) || (position.y < 0))){
+            position.add(0,0);
+
+            // Top right corner
+            if((position.x > screenWidth - image.getWidth()) && (position.y < 0)){
+                if(velocity.x < -1 && velocity.y > 1)
+                    position.add(velocity.x, velocity.y);
+            }
+
+            // Bottom right corner
+            if((position.x > screenWidth - image.getWidth()) && (position.y > screenHeight - image.getHeight())){
+                if(velocity.x < -1 && velocity.y < -1)
+                    position.add(velocity.x, velocity.y);
+            }
+
+            // Top left corner
+            if((position.x < 0) && (position.y < 0)){
+                if(velocity.x > 1 && velocity.y > 1)
+                    position.add(velocity.x, velocity.y);
+            }
+
+            // Bottom left corner
+            if((position.x < 0) && (position.y > screenHeight - image.getHeight())){
+                if(velocity.x > 1 && velocity.y < -1)
+                    position.add(velocity.x, velocity.y);
+            }
+        }
         else
             position.add(velocity.x, velocity.y);
     }
 
+    // Wraps the sprite to the other side of the screen when screen is left
     public void wrap(){
         // Move Object
         position.add(velocity.x, velocity.y);
@@ -120,6 +152,7 @@ public class Sprite {
             position.y = -image.getHeight();
     }
 
+    // Returns true if the sprite is completely off the screen
     public void spriteOffScreen(){
         if((position.x + image.getWidth() < 0) ||
                 (position.x > screenWidth) ||
@@ -130,14 +163,12 @@ public class Sprite {
             offScreen = false;
     }
 
+    // Used to add score points to the sprite, only used for the player sprite
     public void addPoints(int points){
         this.points += points;
     }
 
-    public void incrementLevel(){
-        level++;
-    }
-
+    // sets the level of the sprite, just used for tracking similar sprites
     public void setLevel(int level){
         this.level = level;
     }
