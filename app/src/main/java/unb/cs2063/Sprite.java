@@ -76,32 +76,8 @@ public class Sprite {
 
     // Limits sprite to the screen area
     public void screenEdge(){
-        // if the player has reached a X bound can still move on y axis
-        if((position.x > screenWidth - image.getWidth()) || (position.x < 0)){
-            position.add(0, velocity.y);
-
-            // if player is at the right of the screen (highest x value)
-            if((velocity.x < -1) && (position.x > screenWidth - image.getWidth()))
-                position.add(velocity.x, velocity.y);
-
-            // if player is at the left of screen (lowest x value)
-            else if((velocity.x > 1) && (position.x < 0))
-                position.add(velocity.x, velocity.y);
-        }
-        // if the player has reached a Y bound can still move on the x axis
-        else if((position.y > screenHeight - image.getHeight()) || (position.y < 0)){
-            position.add(velocity.x, 0);
-
-            // if player is at the bottom of the screen (highest Y value)
-            if((velocity.y < -1) && position.y > (screenHeight - image.getHeight()))
-                position.add(velocity.x, velocity.y);
-
-            // if player is at the top of the screen (lowest Y value)
-            else if((velocity.y > 1) && (position.y < 0))
-                position.add(velocity.x, velocity.y);
-        }
         // if in a corner
-        else if(((position.x > screenWidth - image.getWidth()) || (position.x < 0)) &&
+        if(((position.x > screenWidth - image.getWidth()) || (position.x < 0)) &&
                 ((position.y > screenHeight - image.getHeight()) || (position.y < 0))){
             position.add(0,0);
 
@@ -128,6 +104,30 @@ public class Sprite {
                 if(velocity.x > 1 && velocity.y < -1)
                     position.add(velocity.x, velocity.y);
             }
+        }
+        // if the player has reached a X bound can still move on y axis
+        else if((position.x > screenWidth - image.getWidth()) || (position.x < 0)){
+            position.add(0, velocity.y);
+
+            // if player is at the right of the screen (highest x value)
+            if((velocity.x < -1) && (position.x > screenWidth - image.getWidth()))
+                position.add(velocity.x, velocity.y);
+
+            // if player is at the left of screen (lowest x value)
+            else if((velocity.x > 1) && (position.x < 0))
+                position.add(velocity.x, velocity.y);
+        }
+        // if the player has reached a Y bound can still move on the x axis
+        else if((position.y > screenHeight - image.getHeight()) || (position.y < 0)){
+            position.add(velocity.x, 0);
+
+            // if player is at the bottom of the screen (highest Y value)
+            if((velocity.y < -1) && position.y > (screenHeight - image.getHeight()))
+                position.add(velocity.x, velocity.y);
+
+            // if player is at the top of the screen (lowest Y value)
+            else if((velocity.y > 1) && (position.y < 0))
+                position.add(velocity.x, velocity.y);
         }
         else
             position.add(velocity.x, velocity.y);

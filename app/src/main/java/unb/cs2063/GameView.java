@@ -28,6 +28,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Sprite player;
     private int lives = 3;
     private Sprite pause;
+    private Sprite background;
     private ArrayList<Sprite> shotList;
     private ArrayList<Sprite> rockList;
     private int maxRocks = 1;
@@ -79,7 +80,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         // Setting up the text paint
         textPaint = new Paint();
-        textPaint.setColor(Color.BLACK);
+        textPaint.setColor(Color.WHITE);
         textPaint.setTextSize(30);
 
         // Create arraylists for shots and rocks
@@ -107,6 +108,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         pause = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.pause));
         pause.setScreenSize(screenWidth, screenHeight);
         pause.position.set((screenWidth - 105), 5);
+
+        // Sprite for background
+        background = new Sprite(BitmapFactory.decodeResource(getResources(), R.drawable.spacebackground));
+        background.position.set(0,-10);
+        background.setImage(Bitmap.createScaledBitmap(background.image, (int)screenWidth, (int)screenHeight+10, false));
     }
 
     @Override
@@ -264,7 +270,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public void draw(Canvas canvas) {
         super.draw(canvas);
         // Draw background
-        canvas.drawColor(Color.WHITE);
+        //canvas.drawColor(Color.WHITE);
+        background.draw(canvas);
         // Draw all shots
         for(Sprite shot : shotList)
             shot.draw(canvas);
